@@ -30,7 +30,7 @@ async def send_welcome(message: types.Message):
              "/meow - get kitty\n"
              "/bark - get doggy\n"
              "/vulpes - get foxy\n"
-             "/621 <em>tags count</em> - get pictures from <code>e621.net</code>",
+             "/621 tags <em>count</em> - get random pictures from <code>e621.net</code>",
         parse_mode="HTML"
     )
 
