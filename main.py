@@ -70,45 +70,39 @@ async def send_vulpes(message: types.Message):
     await message.answer_photo(url)
 
 
+def get_resp_from_e621(tag: str) -> dict:
+    """ API URL: https://e621.net/posts.json?tags=tag+tag+-tag+rating:s+type:jpg&limit=320
+                        --->>> limit=320 - it's max number on API
+                        --->>> type:jpg  - file format (mp4, webm, png, ...)
+                        --->>> tags=     - tag for search (horny, female, ...)
+                        --->>> rating:s  - 12+
+    """
+    response = requests.get(
+        url=f'https://e621.net/posts.json?tags={tag}+type:png+type:jpg+rating:s&limit=320',
+        auth=('Martin luzifer', '5JYLPJv7fp3LkjdfkAFA6hY4'),
+        headers=HEADERS).json()
+    return dict(response)
+
+
 @dp.message_handler(commands=['621'])
 async def send_link_e621(message: types.Message):
-
-    # GET TAG
-    image_tag = str(message.text.split(sep=" ")[1])
-
-    # GET IMAGE COUNT FOR answer_media_group
     try:
-        image_count = int(message.text.split(sep=" ")[2])
+        image_count = int(message.text.split(sep=" ")[2])               # GET IMAGE COUNT FOR answer_media_group
         if image_count > 9:
             await message.reply(text='не могу отправить больше 9,\nбудет отправлено 9')
             raise IndexError
     except IndexError:
         image_count = 9
-
-    # GET RESPONSE FROM SITE
-    data = requests.get(
-        # https://e621.net/posts.json?tags=tinydeerguy+deer+rating:s+type:jpg&limit=320 (320 it's max number on API)
-        url=f'https://e621.net/posts.json?'
-            f'tags=type:png+type:jpg+rating:s+'
-            f'{image_tag}&'
-            f'limit=320&',
-        headers=HEADERS,
-        auth=(
-            'Martin luzifer',
-            '5JYLPJv7fp3LkjdfkAFA6hY4'
-        )
-    ).json()
-
-    # GET ALL POSTS COUNT
-    all_posts_count = len(data.get("posts"))
-
-    # SEND IMAGES IN GROUP MEDIA
+    response = get_resp_from_e621(tag=str(message.text.split(sep=" ")[1]))
+    posts = response.get('posts')
     images = []
-    for i in range(1, image_count):
-        current_post = random.randint(1, all_posts_count)
-        images.append(types.InputMediaPhoto(data.get('posts')[current_post]['file']['url']))
-    await message.answer_media_group(images)
-
+    for i in range(0, image_count):                   # ОБЪЯСНЕНИЕ ПИЗДЕЦА НА БУДУЩЕЕ
+        all_posts_count = len(posts)                  # 0 - Узнаем максимальное количество существующих записей
+        post_id = random.randint(0, all_posts_count)  # 1 - Выбор случайного индекса от 0 до последней записи
+        post = posts.pop(post_id)                     # 2 - Извлечение случайного словаря из массива
+        url = post['file']['url']                     # 3 - Получение ссылки на изображение из словаря
+        images.append(types.InputMediaPhoto(url))     # 4 - Кладем объект aiogram.types.InputMediaPhoto в массив images
+    await message.answer_media_group(images)          # 5 - Отправка объекта images в группу или юзверю
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
