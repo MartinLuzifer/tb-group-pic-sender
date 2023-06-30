@@ -1,2 +1,5 @@
+venv
+.gitignore
 conf.py
+req.py
 
